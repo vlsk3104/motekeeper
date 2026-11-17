@@ -39,3 +39,37 @@ writeFileSync(
     game_path_max_bytes: 1000,
   }),
 );
+
+// Build inventory (added for this entry): once the dossier is written, walk the
+// two folders that were just handed in and print what the build actually
+// contains — one line per file with its size, then a closing total. It reads
+// only the output directory, never touches the dossier, and exists so a human
+// glancing at the build log can see the entry's shape at a glance.
+async function printInventory(root) {
+  const { readdir, stat } = await import('node:fs/promises');
+  const rows = [];
+  async function walk(dir, prefix) {
+    const entries = await readdir(dir, { withFileTypes: true });
+    entries.sort((a, b) => (a.name < b.name ? -1 : a.name > b.name ? 1 : 0));
+    for (const entry of entries) {
+      const rel = prefix === '' ? entry.name : `${prefix}/${entry.name}`;
+      const full = join(dir, entry.name);
+      if (entry.isDirectory()) await walk(full, rel);
+      else if (entry.isFile()) rows.push({ rel, bytes: (await stat(full)).size });
+    }
+  }
+  for (const folder of ['game', 'screenshots']) {
+    await walk(join(root, folder), folder);
+  }
+  // The dossier itself belongs in the inventory too: it is the third thing
+  // the build hands in, and its size is the one that grows with the sources.
+  rows.push({ rel: 'dossier.json', bytes: (await stat(join(root, 'dossier.json'))).size });
+  let total = 0;
+  for (const row of rows) {
+    total += row.bytes;
+    console.log(`${row.rel}  ${row.bytes} bytes`);
+  }
+  console.log(`inventory: ${rows.length} files, ${total} bytes total`);
+}
+
+await printInventory(out);
