@@ -1,0 +1,28 @@
+/* Motekeeper's page: the night fills the window, the 1280x720 stage is letterboxed and
+   centred on it by main.js, and the status line is read aloud but never shown. */
+
+html,
+body {
+  margin: 0;
+  height: 100%;
+  overflow: hidden;
+  background: #070a1a;
+}
+
+#game {
+  position: fixed;
+  display: block;
+  touch-action: none;
+  border-radius: 6px;
+  box-shadow: 0 0 90px rgba(64, 96, 255, 0.25);
+}
+
+/* Read aloud, never shown: the status line screen readers announce. */
+#status {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
